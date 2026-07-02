@@ -11,9 +11,11 @@ void taskSamplePot(void *pvParameters) {
   
   for (;;) {
     // TODO 1: Read the analog value from the potentiometer pin and store it in globalPotValue
-    
+    globalPotValue = analogRead(CS147Pins::POT_ADC);
+
     // TODO 2: Delay the task for 100ms using FreeRTOS vTaskDelay() to yield CPU time
     // Hint: Use pdMS_TO_TICKS(100)
+    vTaskDelay(pdMS_TO_TICKS(100));
   }
 }
 
@@ -23,8 +25,14 @@ void taskReportStatus(void *pvParameters) {
   for (;;) {
     // TODO 3: Check if 1000ms have passed using cs147Every.
     // If true, print the globalPotValue to Serial and write it to the OLED display.
-    
+    if (cs147Every(1000, lastPrint)) {
+      Serial.print("Potentiometer Value: ");
+      Serial.println(globalPotValue);
+      cs147DisplayLines("C04 FreeRTOS Tasks", "Pot Value:", String(globalPotValue));
+    }
+
     // TODO 4: Yield control with a short vTaskDelay of 10ms to keep the watchdog timer happy
+    vTaskDelay(pdMS_TO_TICKS(10));
   }
 }
 
@@ -35,8 +43,10 @@ void setup() {
 
   // TODO 5: Create taskSamplePot using xTaskCreate()
   // Assign it a stack size of 2048, no parameters, priority 1, and no task handle output.
-  
+  xTaskCreate(taskSamplePot, "SamplePot", 2048, NULL, 1, NULL);
+
   // TODO 6: Create taskReportStatus using xTaskCreate() with the same configuration.
+  xTaskCreate(taskReportStatus, "ReportStatus", 2048, NULL, 1, NULL);
 }
 
 void loop() {
